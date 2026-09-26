@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from 'lucide-react';
 
 const EditProfile = () => {
 
@@ -104,9 +105,19 @@ return(
 
 <div className="max-w-xl mx-auto p-6">
 
-<h1 className="text-2xl font-bold mb-6">
+<div className="flex items-center gap-4 mb-6">
+<button
+onClick={() => navigate("/profile")}
+className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition text-gray-700"
+title="Go Back"
+>
+<ArrowLeft className="w-5 h-5"/>
+</button>
+
+<h1 className="text-2xl font-bold">
 Edit Profile
 </h1>
+</div>
 
 <form onSubmit={handleSubmit} className="space-y-4">
 

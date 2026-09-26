@@ -34,6 +34,7 @@ import ChatPage from "./pages/chatPage";
 import ClientMessages from "./pages/ClientMessages";
 import AuthCallback from "./pages/AuthCallback"
 import EditProfile from "./pages/EditProfile"
+import Payments from "./components/dashboard/Payment"
 
 // Simple Layout component with Chatbot
 const Layout = ({ children }) => {
@@ -106,12 +107,13 @@ const App = () => {
 
               {/* Protected Routes */}
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/payments" element={<Payments />} />
               <Route path="/edit-profile" element={<EditProfile />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/profile" element={<ProtectedRoute><Layout><UserProfile /></Layout></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><Layout><Messages /></Layout></ProtectedRoute>} />
               <Route path="/messages/:id" element={<ProtectedRoute><Layout><Messages /></Layout></ProtectedRoute>} />
-              <Route path="/chat" element={<ChatSystem />} />
+
               <Route path="/lawyer/edit-profile" element={<EditLawyerProfile />} />
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />

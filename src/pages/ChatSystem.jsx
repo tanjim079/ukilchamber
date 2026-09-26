@@ -75,7 +75,7 @@ const Chat = () => {
     await supabase.from("messages").insert({
       conversation_id: selectedConversation.id,
       sender_id: user.id,
-      message: message
+      content: message
     });
 
     setMessage("");
@@ -164,7 +164,7 @@ const Chat = () => {
               }`}
             >
 
-              {msg.message}
+              {msg.content}
 
             </div>
 

@@ -4,16 +4,33 @@ import DocumentList from "../components/dashboard/DocumentList";
 import ClientList from "../components/dashboard/ClientList";
 import DashboardStats from "../components/dashboard/DashboardStats";
 import MessageCenter from "../components/dashboard/MessageCenter";
-import { Calendar, FileText, Users, Briefcase, MessageCircle, Menu, PanelBottom, User, ClipboardList } from 'lucide-react';
+import Payments from "../components/dashboard/Payment"; // ✅ FIX PATH IF NEEDED
+
+import {
+  Calendar,
+  FileText,
+  Users,
+  Briefcase,
+  MessageCircle,
+  Menu,
+  PanelBottom,
+  User,
+  ClipboardList,
+  DollarSign, // ✅ NEW ICON
+  LogOut
+} from 'lucide-react';
+
 import { Link } from "react-router-dom";
 import { AiOutlineHome } from "react-icons/ai";
 import { useTranslation } from "../hooks/useTranslation";
 import { supabase } from "../services/supabaseClient";
+import { useAuth } from "../contexts/AuthContext";
 import logo from '../../public/logo drk.png';
 
 const Dashboard = () => {
 
   const { t } = useTranslation();
+  const { logout } = useAuth();
 
   const [activeView,setActiveView] = useState("overview");
   const [isMenuOpen,setIsMenuOpen] = useState(false);
@@ -28,21 +45,18 @@ const Dashboard = () => {
   async function loadLawyer(){
 
     const { data:userData } = await supabase.auth.getUser()
-
     const user = userData?.user
 
     if(!user) return
 
     const { data } = await supabase
-    .from("lawyers")
-    .select("*")
-    .eq("id",user.id)
-    .single()
+      .from("lawyers")
+      .select("*")
+      .eq("id",user.id)
+      .single()
 
     setLawyer(data)
-
   }
-
 
   /* ---------------- NAVIGATION ---------------- */
 
@@ -52,8 +66,10 @@ const Dashboard = () => {
     { view:"documents", label:"Documents", icon:FileText },
     { view:"clients", label:"Clients", icon:Users },
     { view:"messages", label:"Messages", icon:MessageCircle },
-  ];
 
+    // ✅🔥 THIS IS YOUR MISSING PART
+    { view:"payments", label:"Payments", icon:DollarSign }
+  ];
 
   /* ---------------- CONTENT SWITCH ---------------- */
 
@@ -76,19 +92,19 @@ const Dashboard = () => {
       case "messages":
         return <MessageCenter />
 
+      case "payments":
+        return <Payments/>
+
       default:
         return <DashboardStats />
 
     }
-
   }
 
-
   const lawyerName =
-  lawyer
-  ? `${lawyer.first_name || ""} ${lawyer.last_name || ""}`
-  : "Loading..."
-
+    lawyer
+    ? `${lawyer.first_name || ""} ${lawyer.last_name || ""}`
+    : "Loading..."
 
   return (
 
@@ -111,7 +127,6 @@ const Dashboard = () => {
 
 </div>
 
-
 <div className="container mx-auto px-4 py-4 md:py-8">
 
 {/* HEADER */}
@@ -130,51 +145,39 @@ Welcome, {lawyerName}
 
 </div>
 
-
 {/* RIGHT BUTTONS */}
 
 <div className="flex flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
 
-
 <Link to="/lawyer/bookings">
-
 <button className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition flex items-center justify-center">
-
 <ClipboardList className="w-5 h-5 mr-2"/>
 Booking Requests
-
 </button>
-
 </Link>
-
 
 <Link to="/lawyer/edit-profile">
-
 <button className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center">
-
 <User className="w-5 h-5 mr-2"/>
 Edit Profile
-
 </button>
-
 </Link>
-
 
 <Link to="https://saas.ukilchamber.com/" target="_blank">
-
 <button className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center justify-center">
-
 <PanelBottom className="w-5 h-5 mr-2"/>
 SAAS Panel
-
 </button>
-
 </Link>
 
-</div>
+<button onClick={logout} className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center justify-center">
+<LogOut className="w-5 h-5 mr-2"/>
+Logout
+</button>
 
 </div>
 
+</div>
 
 {/* MOBILE MENU */}
 
@@ -195,7 +198,6 @@ className="w-full px-4 py-2 bg-white rounded-md shadow-md flex items-center just
 
 </div>
 
-
 {/* NAVIGATION */}
 
 <div className={`md:flex md:space-x-4 mb-6 ${isMenuOpen ? 'block':'hidden md:block'}`}>
@@ -214,7 +216,6 @@ setIsMenuOpen(false)
 >
 
 <Icon className="w-5 h-5 mr-2"/>
-
 {label}
 
 </button>
@@ -224,22 +225,17 @@ setIsMenuOpen(false)
 
 </div>
 
-
 {/* CONTENT */}
 
 <div className="bg-white rounded-lg shadow-md p-4 md:p-6 overflow-x-auto">
-
 {renderContent()}
-
-</div>
-
-
 </div>
 
 </div>
 
-)
+</div>
 
+  )
 }
 
 export default Dashboard

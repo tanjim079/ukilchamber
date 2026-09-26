@@ -1,229 +1,408 @@
-# Lawyer Consultation Platform
+# ⚖️ LawBaba
 
-A modern web application that connects clients with legal professionals through an intuitive and feature-rich platform.
+### Smart Online Legal Consultation Platform
 
-Added test login credentials:
-Client:
-Email: client@test.com
-Password: client123
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![Vite](https://img.shields.io/badge/Bundler-Vite-purple)
+![Supabase](https://img.shields.io/badge/Backend-Supabase-green)
+![Tailwind](https://img.shields.io/badge/UI-TailwindCSS-38BDF8)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![Status](https://img.shields.io/badge/Project-Active-success)
 
-Lawyer:
-Email: lawyer@test.com
-Password: lawyer123
+LawBaba is a **modern legal consultation platform** designed to connect **clients and lawyers through a secure online environment**.
+The system enables users to **search lawyers, schedule consultations, chat in real-time, and receive legal assistance** through a clean and responsive web interface.
 
-## 🚀 Features
+This project demonstrates a **full modern web application architecture using React, Supabase, and real-time communication technologies**.
 
-- **User Authentication**
-  - Role-based access (Client/Lawyer)
-  - Protected routes
-  - JWT-based authentication
-  - Secure password handling
+---
 
-- **Lawyer Discovery**
-  - Advanced search and filtering
-  - Real-time search results
-  - Pagination support
-  - Lawyer profiles with ratings and reviews
+# 📌 Table of Contents
 
-- **Real-time Messaging**
-  - Instant chat between clients and lawyers
-  - File attachments
-  - Message history
-  - Online status indicators
+* Overview
+* Key Features
+* Screenshots
+* System Architecture
+* Technology Stack
+* Project Structure
+* Installation
+* Environment Variables
+* Running the Project
+* Testing
+* Security
+* Future Improvements
+* Contributing
+* License
 
-- **Consultation Management**
-  - Booking system
-  - Schedule management
-  - Payment integration
-  - Consultation history
+---
 
-- **Document Management**
-  - Secure file sharing
-  - Document preview
-  - Version control
-  - Access permissions
+# 📖 Overview
 
-## 🛠️ Technology Stack
+Legal consultation is often difficult to access quickly and efficiently. LawBaba aims to simplify this process by providing a **digital platform where users can easily connect with professional lawyers**.
 
-- **Frontend**
-  - React 18+ with Vite
-  - TailwindCSS for styling
-  - React Router v6 for routing
-  - Context API for state management
-  - WebSocket for real-time features
-  - Formik + Yup for form handling
+The platform provides:
 
-- **Backend** (Required for full functionality)
-  - Node.js with Express
-  - MongoDB for database
-  - JWT for authentication
-  - WebSocket for real-time features
+* Lawyer discovery
+* Consultation booking
+* Secure messaging
+* Document sharing
+* AI-powered legal help
 
-## 📁 Project Structure
+It is built with **scalable frontend architecture and modern developer tooling**, making it suitable for real-world deployment and further expansion.
+
+---
+
+# 🚀 Key Features
+
+## 👤 Client Features
+
+* Search and browse verified lawyers
+* Book legal consultations
+* Real-time chat with lawyers
+* Upload legal documents
+* AI legal assistant chatbot
+* Secure login and registration
+
+---
+
+## ⚖️ Lawyer Features
+
+* Lawyer dashboard
+* Client management system
+* Consultation tracking
+* Messaging system
+* Case communication tools
+
+---
+
+## 🧠 Smart System Features
+
+* Real-time messaging with Socket.io
+* Secure authentication via Supabase
+* AI chatbot support
+* Form validation
+* Responsive UI for mobile and desktop
+
+---
+
+# 🏗 System Architecture
 
 ```
-frontend/
-├── public/              # Static files
-├── src/
-│   ├── assets/         # Images, fonts, etc.
-│   ├── components/     # Reusable components
-│   │   ├── auth/      # Authentication components
-│   │   ├── chat/      # Chat-related components
-│   │   ├── common/    # Common UI components
-│   │   └── lawyers/   # Lawyer-specific components
-│   ├── contexts/      # React Context providers
-│   ├── hooks/         # Custom React hooks
-│   ├── pages/         # Page components
-│   ├── services/      # API and external services
-│   ├── utils/         # Utility functions
-│   ├── App.jsx        # Root component
-│   └── main.jsx       # Entry point
-├── .env               # Environment variables
-└── package.json       # Dependencies and scripts
+                ┌───────────────────┐
+                │      Client       │
+                │   React + Vite    │
+                └─────────┬─────────┘
+                          │
+                          │ API Calls
+                          │
+                 ┌────────▼────────┐
+                 │     Supabase    │
+                 │ Auth + Database │
+                 └────────┬────────┘
+                          │
+             Real-time    │
+            Messaging     │
+                          ▼
+                   ┌────────────┐
+                   │ Messaging  │
+                   └────────────┘
 ```
 
-## 🚦 Getting Started
+Architecture layers:
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd lawyer-consultation-platform
-   ```
+1. **Presentation Layer**
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+   * React UI
+   * TailwindCSS styling
 
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_API_URL=http://localhost:3000
-   VITE_WS_URL=ws://localhost:3000
-   ```
+2. **Application Layer**
 
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
+   * React Query
+   * Axios API calls
+   * Form validation
 
-## 🔌 API Integration
+3. **Service Layer**
 
-### Backend API Requirements
+   * Supabase authentication
+   * Database management
+   * Real-time chat
 
-The frontend expects the following API endpoints:
+---
 
-```javascript
-// Authentication
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/refresh-token
+# 🧰 Technology Stack
 
-// Lawyers
-GET    /api/lawyers
-GET    /api/lawyers/:id
-GET    /api/lawyers/search
-POST   /api/lawyers/filter
+## Frontend
 
-// Consultations
-POST   /api/consultations
-GET    /api/consultations
-PUT    /api/consultations/:id
+* React 19
+* Vite
+* React Router DOM
+* TailwindCSS
 
-// Messages
-GET    /api/messages/:conversationId
-POST   /api/messages
-GET    /api/conversations
+---
 
-// Documents
-POST   /api/documents/upload
-GET    /api/documents
-DELETE /api/documents/:id
+## State & Data Fetching
+
+* React Query
+* Axios
+
+---
+
+## Backend / Services
+
+* Supabase (Database + Auth)
+* Socket.io Client
+
+---
+
+## Forms & Validation
+
+* React Hook Form
+* Formik
+* Yup
+
+---
+
+## UI Libraries
+
+* Heroicons
+* Lucide React
+* React Icons
+* React Toastify
+* React Hot Toast
+
+---
+
+## Testing Tools
+
+* Vitest
+* Cypress
+* Testing Library
+
+---
+
+## Development Tools
+
+* ESLint
+* Prettier
+* PostCSS
+* Autoprefixer
+
+---
+
+# 📁 Project Structure
+
+```
+LawBaba
+│
+├── public
+│
+├── src
+│   │
+│   ├── assets
+│   │     images, logos
+│   │
+│   ├── chat
+│   │   ├── api
+│   │   └── hooks
+│   │
+│   ├── components
+│   │   │
+│   │   ├── auth
+│   │   │     login, signup
+│   │   │
+│   │   ├── booking
+│   │   │     consultation modal
+│   │   │
+│   │   ├── chat
+│   │   │     chat interface
+│   │   │
+│   │   ├── chatbot
+│   │   │     AI assistant
+│   │   │
+│   │   ├── common
+│   │   │     navbar, footer
+│   │   │
+│   │   ├── dashboard
+│   │   │     lawyer dashboard
+│   │   │
+│   │   ├── error
+│   │   │     error pages
+│   │   │
+│   │   └── lawyers
+│   │         lawyer cards and search
+│   │
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── App.css
+│
+├── package.json
+├── vite.config.js
+└── README.md
 ```
 
-### WebSocket Events
+---
 
-```javascript
-// Connection
-socket.on('connect')
-socket.on('disconnect')
+# ⚙️ Installation
 
-// Messages
-socket.on('message:new')
-socket.on('message:read')
-
-// Status
-socket.on('user:online')
-socket.on('user:offline')
-```
-
-## 🔐 Authentication Flow
-
-1. User registers/logs in through `/auth` endpoints
-2. JWT token is stored in memory (not in localStorage for security)
-3. Refresh token is stored as an HTTP-only cookie
-4. API requests include JWT in Authorization header
-5. Token refresh is handled automatically by axios interceptors
-
-## 🎯 Future Improvements
-
-1. **Performance Optimization**
-   - Implement React.lazy for code splitting
-   - Add service worker for offline support
-   - Optimize image loading with lazy loading
-
-2. **Enhanced Security**
-   - Add 2FA support
-   - Implement rate limiting
-   - Add CAPTCHA for registration
-
-3. **Feature Additions**
-   - Video consultation support
-   - Document e-signing
-   - Calendar integration
-   - Payment gateway integration
-
-4. **Testing**
-   - Add unit tests with Jest
-   - Add E2E tests with Cypress
-   - Add integration tests
-
-5. **Monitoring**
-   - Error tracking with Sentry
-   - Analytics integration
-   - Performance monitoring
-
-## 🧪 Testing
+Clone the repository:
 
 ```bash
-# Run unit tests
+git clone https://github.com/saifulislam735/LawBaba.git
+```
+
+Move into the project directory:
+
+```bash
+cd lawbaba
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+---
+
+# 🔐 Environment Variables
+
+Create a `.env` file in the root directory.
+
+Example:
+
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_key
+```
+
+These are required for authentication and database communication.
+
+---
+
+# ▶️ Running the Project
+
+Start development server:
+
+```
+npm run dev
+```
+
+Build production version:
+
+```
+npm run build
+```
+
+Preview build:
+
+```
+npm run preview
+```
+
+---
+
+# 🧪 Testing
+
+Run unit tests:
+
+```
 npm run test
+```
 
-# Run E2E tests
-npm run test:e2e
+Watch mode:
 
-# Generate coverage report
+```
+npm run test:watch
+```
+
+Coverage report:
+
+```
 npm run test:coverage
 ```
 
-## 📚 Documentation
+Run Cypress end-to-end tests:
 
-- Component documentation is available in each component's directory
-- API documentation can be found in `/docs/api`
-- Additional documentation can be found in the `/docs` directory
+```
+npm run test:e2e
+```
 
-## 🤝 Contributing
+Headless E2E testing:
+
+```
+npm run test:e2e:headless
+```
+
+---
+
+# 🔒 Security
+
+Security considerations implemented in the project:
+
+* Protected routes for authenticated users
+* Supabase authentication
+* Environment variable configuration
+* Form validation using Yup
+* Secure API handling
+
+---
+
+# 📈 Future Improvements
+
+Planned enhancements include:
+
+* Video consultation support
+* Payment gateway integration
+* AI legal document analysis
+* Lawyer rating & review system
+* Case management system
+* Notification system
+* Mobile application version
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+Steps to contribute:
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a new feature branch
+
+```
+git checkout -b feature-name
+```
+
 3. Commit your changes
-4. Push to the branch
+
+```
+git commit -m "Add new feature"
+```
+
+4. Push the branch
+
+```
+git push origin feature-name
+```
+
 5. Create a Pull Request
 
-## 📄 License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+# 📜 License
 
-## 🆘 Support
+This project is licensed under the **MIT License**.
 
-For support, email support@lawyerplatform.com or join our Slack channel.
+---
+
+# ⭐ Support
+
+If you find this project useful:
+
+* ⭐ Star the repository
+* 🍴 Fork the project
+* 📢 Share it with others
+
+---
+
+**LawBaba – Making Legal Help Accessible Online**

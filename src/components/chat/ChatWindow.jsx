@@ -42,7 +42,7 @@ const ChatWindow = ({ conversation }) => {
 
       conversation_id:conversation.id,
       sender_id:user.id,
-      message:text
+      content:text
 
     });
 
@@ -122,7 +122,7 @@ const ChatWindow = ({ conversation }) => {
                   : "bg-white border"
                 }`}
               >
-                {m.message}
+                {m.content}
               </div>
 
             </div>

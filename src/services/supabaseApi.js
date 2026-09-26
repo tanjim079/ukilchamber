@@ -4,7 +4,7 @@ export const getLawyers = async () => {
   try {
     const { data, error } = await supabase
       .from("lawyers")
-      .select("*");   // 🔥 REMOVE profiles JOIN
+      .select("*");
 
     if (error) {
       console.error("Supabase error:", error);

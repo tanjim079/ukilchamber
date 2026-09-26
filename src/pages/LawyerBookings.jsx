@@ -158,41 +158,62 @@ const LawyerBookings = () => {
                     </td>
 
                     <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(b.status)}`}>
-                        {b.status}
-                      </span>
+                      {(() => {
+                        let displayStatus = b.status;
+                        let style = getStatusStyle(b.status);
+
+                        if (b.status === "pending" && b.payment_status === "unpaid") {
+                          const createdStr = (b.created_at.endsWith('Z') || b.created_at.includes('+')) ? b.created_at : b.created_at + 'Z';
+                          const isExpired = (new Date() - new Date(createdStr)) / (1000 * 60 * 60) > 3;
+                          if (isExpired) {
+                            displayStatus = "Expired (Unpaid)";
+                            style = "bg-gray-200 text-gray-700";
+                          }
+                        }
+
+                        if (b.status === "accepted" && b.payment_status === "paid") {
+                           displayStatus = "Auto-Accepted (Paid)";
+                        }
+
+                        return (
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${style}`}>
+                            {displayStatus}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     <td className="p-4">
+                      {(() => {
+                        const createdStr2 = (b.created_at.endsWith('Z') || b.created_at.includes('+')) ? b.created_at : b.created_at + 'Z';
+                        const isExpired = b.status === "pending" && b.payment_status === "unpaid" && (new Date() - new Date(createdStr2)) / (1000 * 60 * 60) > 3;
+                        
+                        if (b.status === "pending" && !isExpired) {
+                          return (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={()=>updateStatus(b.id,"accepted")}
+                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded-md text-sm"
+                              >
+                                Accept
+                              </button>
 
-                      {b.status === "pending" ? (
-
-                        <div className="flex gap-2">
-
-                          <button
-                            onClick={()=>updateStatus(b.id,"accepted")}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded-md text-sm"
-                          >
-                            Accept
-                          </button>
-
-                          <button
-                            onClick={()=>updateStatus(b.id,"rejected")}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-md text-sm"
-                          >
-                            Reject
-                          </button>
-
-                        </div>
-
-                      ) : (
-
-                        <span className="text-gray-400 text-sm">
-                          No action
-                        </span>
-
-                      )}
-
+                              <button
+                                onClick={()=>updateStatus(b.id,"rejected")}
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-md text-sm"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <span className="text-gray-400 text-sm whitespace-nowrap">
+                            {isExpired ? "Time Expired" : "No action"}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                   </tr>

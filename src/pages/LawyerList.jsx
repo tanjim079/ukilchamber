@@ -8,6 +8,8 @@ import { useNotification } from "../contexts/NotificationContext";
 import { getLawyers } from "../services/supabaseApi";
 import { getOrCreateConversation } from "../services/chatService";
 
+import { useQuery } from '@tanstack/react-query';
+
 const LawyerList = () => {
 
   console.log("LawyerList loaded");
@@ -15,48 +17,33 @@ const LawyerList = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotification();
 
-  const [loading, setLoading] = useState(true);
-  const [lawyers, setLawyers] = useState([]);
   const [filteredLawyers, setFilteredLawyers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  const { data: lawyers = [], isLoading: loading, error } = useQuery({
+    queryKey: ['lawyers'],
+    queryFn: async () => {
+      const data = await getLawyers();
+      if (!data) throw new Error("No data returned");
+      return data;
+    },
+  });
+
   useEffect(() => {
+    if (error) {
+      console.error(error);
+      addNotification({
+        type: "error",
+        title: "Error",
+        message: "Failed to fetch lawyers. Please try again."
+      });
+    }
+  }, [error, addNotification]);
 
-    const fetchLawyers = async () => {
-
-      try {
-
-        setLoading(true);
-
-        const data = await getLawyers();
-
-        if (!data) throw new Error("No data returned");
-
-        setLawyers(data);
-        setFilteredLawyers(data);
-
-      } catch (error) {
-
-        console.error(error);
-
-        addNotification({
-          type: "error",
-          title: "Error",
-          message: "Failed to fetch lawyers. Please try again."
-        });
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-    fetchLawyers();
-
-  }, [addNotification]);
+  useEffect(() => {
+    setFilteredLawyers(lawyers);
+  }, [lawyers]);
 
   // -----------------------------
   // CHAT OPEN FUNCTION
@@ -105,11 +92,14 @@ const LawyerList = () => {
 
       const query = searchQuery.toLowerCase();
 
-      filtered = filtered.filter((lawyer) =>
-        lawyer?.profiles?.first_name?.toLowerCase().includes(query) ||
-        lawyer?.specialization?.toLowerCase().includes(query) ||
-        lawyer?.location?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((lawyer) => {
+        const fullName = `${lawyer?.first_name || ""} ${lawyer?.last_name || ""}`.toLowerCase();
+        return (
+          fullName.includes(query) ||
+          lawyer?.specialization?.toLowerCase().includes(query) ||
+          lawyer?.location?.toLowerCase().includes(query)
+        );
+      });
 
     }
 

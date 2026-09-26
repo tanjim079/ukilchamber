@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { initiatePayment } from "../services/paymentService";
 
 const BookConsultation = () => {
 
@@ -15,7 +15,11 @@ const BookConsultation = () => {
   const [selectedTime, setSelectedTime] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
+  //////////////////////////////////////////////////////
+  // FETCH LAWYER
+  //////////////////////////////////////////////////////
   useEffect(() => {
     fetchLawyer();
   }, []);
@@ -36,57 +40,72 @@ const BookConsultation = () => {
     setLoading(false);
   };
 
+  //////////////////////////////////////////////////////
+  // UTIL FUNCTIONS
+  //////////////////////////////////////////////////////
   const getDayName = (dateStr) => {
     const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-    const d = new Date(dateStr);
-    return days[d.getDay()];
+    return days[new Date(dateStr).getDay()];
   };
 
   const isPastTimeToday = (date, time) => {
-
-    const today = new Date();
+    const now = new Date();
     const selected = new Date(date);
 
-    if (today.toDateString() !== selected.toDateString()) return false;
+    if (now.toDateString() !== selected.toDateString()) return false;
 
-    const currentHour = today.getHours();
-
-    const timeHour = parseInt(time.split(":")[0]);
+    let hour = parseInt(time.split(":")[0]);
     const isPM = time.includes("PM");
 
-    let hour24 = timeHour;
+    if (isPM && hour !== 12) hour += 12;
+    if (!isPM && hour === 12) hour = 0;
 
-    if (isPM && timeHour !== 12) hour24 += 12;
-    if (!isPM && timeHour === 12) hour24 = 0;
-
-    return hour24 <= currentHour;
+    return hour <= now.getHours();
   };
 
+  //////////////////////////////////////////////////////
+  // DATE CHANGE
+  //////////////////////////////////////////////////////
   const handleDateChange = async (date) => {
 
     setSelectedDate(date);
     setSelectedTime("");
 
-    const dayName = getDayName(date);
-    const times = availability[dayName] || [];
-
-    setAvailableTimes(times);
+    const day = getDayName(date);
+    setAvailableTimes(availability[day] || []);
 
     const { data } = await supabase
       .from("bookings")
-      .select("booking_time,status")
+      .select("booking_time,status,payment_status,created_at")
       .eq("lawyer_id", id)
       .eq("booking_date", date)
       .in("status", ["pending","accepted"]);
 
-    setBookedSlots(data || []);
+    // Filter out bookings that are pending, unpaid, and older than 3 hours
+    const validBookings = (data || []).filter(b => {
+      if (b.status === "pending" && b.payment_status === "unpaid") {
+        const createdStr = (b.created_at.endsWith('Z') || b.created_at.includes('+')) ? b.created_at : b.created_at + 'Z';
+        const created = new Date(createdStr);
+        const now = new Date();
+        const diffHours = (now - created) / (1000 * 60 * 60);
+        return diffHours <= 3; // Keep if under 3 hours
+      }
+      return true; // Keep accepted or paid bookings
+    });
+
+    setBookedSlots(validBookings);
   };
 
   const isBooked = (time) => {
     return bookedSlots.some(b => b.booking_time === time);
   };
 
-  const handleBooking = async () => {
+  //////////////////////////////////////////////////////
+  // 🔥 MAIN BOOKING FUNCTION (FIXED)
+  //////////////////////////////////////////////////////
+  const handleBooking = async (paymentType) => {
+
+    if (submitting) return;
 
     if (!selectedDate || !selectedTime) {
       alert("Select valid date & time");
@@ -99,48 +118,145 @@ const BookConsultation = () => {
       alert("Cannot book past date");
       return;
     }
+    
+    setSubmitting(true);
+
+    // 🔥 DOUBLE CHECK SLOT (IMPORTANT FIX)
+    const { data: existing } = await supabase
+      .from("bookings")
+      .select("id, status, payment_status, created_at")
+      .eq("lawyer_id", id)
+      .eq("booking_date", selectedDate)
+      .eq("booking_time", selectedTime)
+      .in("status", ["pending","accepted"]);
+
+    const activeExisting = (existing || []).filter(b => {
+      if (b.status === "pending" && b.payment_status === "unpaid") {
+        const createdStr = (b.created_at.endsWith('Z') || b.created_at.includes('+')) ? b.created_at : b.created_at + 'Z';
+        const diffHours = (new Date() - new Date(createdStr)) / (1000 * 60 * 60);
+        return diffHours <= 3;
+      }
+      return true;
+    });
+
+    if (activeExisting.length > 0) {
+      alert("Slot already booked");
+      setSubmitting(false);
+      return;
+    }
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
 
     if (!user) {
       alert("Login required");
+      setSubmitting(false);
       return;
     }
 
-    const { error } = await supabase.from("bookings").insert([
-      {
-        lawyer_id: id,
-        client_id: user.id,
-        client_name: user.email,
-        lawyer_name: lawyer?.first_name + " " + lawyer?.last_name,
-        booking_date: selectedDate,
-        booking_time: selectedTime,
-        status: "pending"
-      }
-    ]);
+    // ✅ FETCH REAL CLIENT PHONE
+    const { data: clientData } = await supabase
+      .from("clients")
+      .select("phone, first_name, last_name")
+      .eq("id", user.id)
+      .single();
+
+    const clientPhone = clientData?.phone || "01700000000";
+    const clientName = clientData?.first_name
+      ? `${clientData.first_name} ${clientData.last_name}`
+      : user.email;
+
+    // ✅ INSERT BOOKING FIRST
+    const { data, error } = await supabase
+      .from("bookings")
+      .insert([
+        {
+          lawyer_id: id,
+          client_id: user.id,
+          client_name: user.email,
+          lawyer_name: lawyer?.first_name + " " + lawyer?.last_name,
+          booking_date: selectedDate,
+          booking_time: selectedTime,
+          status: "pending",
+          payment_status: "unpaid"
+        }
+      ])
+      .select();
 
     if (error) {
-      alert("Slot already booked");
-    } else {
-      alert("Booking request sent");
-      setSelectedTime("");
-      handleDateChange(selectedDate);
+      console.error(error);
+      alert("Booking failed");
+      setSubmitting(false);
+      return;
     }
+
+    const booking = data[0];
+
+    //////////////////////////////////////////////////////
+    // 🔵 PAY NOW
+    //////////////////////////////////////////////////////
+    if (paymentType === "now") {
+
+      try {
+
+        const fee = lawyer?.consultation_fee;
+
+        if (!fee) {
+          alert("Consultation fee not set for this lawyer");
+          setSubmitting(false);
+          return;
+        }
+
+        const paymentData = await initiatePayment({
+          amount: fee,
+          name: clientName,
+          email: user.email,
+          phone: clientPhone,  // ✅ REAL PHONE
+          booking_id: booking.id
+        });
+
+        if (paymentData?.GatewayPageURL) {
+          window.location.href = paymentData.GatewayPageURL;
+        } else {
+          alert("Payment initialization failed");
+          setSubmitting(false);
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("Payment error");
+        setSubmitting(false);
+      }
+
+    }
+    //////////////////////////////////////////////////////
+    // ⚪ PAY LATER
+    //////////////////////////////////////////////////////
+    else {
+      alert("Booking request sent");
+      setSubmitting(false);
+    }
+
+    setSelectedTime("");
+    handleDateChange(selectedDate);
   };
 
+  //////////////////////////////////////////////////////
+  // UI
+  //////////////////////////////////////////////////////
   if (loading) return <div className="p-10">Loading...</div>;
 
   const today = new Date().toISOString().split("T")[0];
 
   return (
+
     <div className="max-w-3xl mx-auto p-6">
 
-      {/* BACK BUTTON */}
+      {/* BACK */}
       <div className="mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 bg-white border px-4 py-2 rounded-lg shadow hover:bg-gray-100"
+          className="bg-white border px-4 py-2 rounded"
         >
           ← Back
         </button>
@@ -166,7 +282,7 @@ const BookConsultation = () => {
           <div className="flex flex-wrap gap-2">
 
             {availableTimes.length === 0 && (
-              <p className="text-gray-400">Lawyer not available this day</p>
+              <p className="text-gray-400">Lawyer not available</p>
             )}
 
             {availableTimes.map((t,i)=>{
@@ -197,15 +313,36 @@ const BookConsultation = () => {
         </div>
       )}
 
-      {/* BOOK */}
-      <button
-        onClick={handleBooking}
-        className="mt-8 bg-blue-600 text-white px-6 py-3 rounded"
-      >
-        Send Booking Request
-      </button>
+      {/* 🔥 SHOW FEE */}
+      {lawyer?.consultation_fee && (
+        <div className="mt-6 text-lg font-semibold text-blue-600">
+          Consultation Fee: {lawyer.consultation_fee} BDT
+        </div>
+      )}
+
+      {/* 🔥 PAYMENT BUTTONS */}
+      <div className="mt-8 flex gap-4">
+
+        <button
+          onClick={() => handleBooking("later")}
+          disabled={submitting}
+          className={`px-6 py-3 rounded text-white ${submitting ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-500 hover:bg-gray-600'}`}
+        >
+          {submitting ? "Processing..." : "Pay Later"}
+        </button>
+
+        <button
+          onClick={() => handleBooking("now")}
+          disabled={submitting}
+          className={`px-6 py-3 rounded text-white ${submitting ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+        >
+          {submitting ? "Redirecting..." : "Pay Now"}
+        </button>
+
+      </div>
 
     </div>
+
   );
 };
 
